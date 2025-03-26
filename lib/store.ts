@@ -23,7 +23,7 @@ interface TimerState {
 
 export const useTimerStore = create<TimerState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       tasks: [],
       
       addTask: (name: string) => {
@@ -37,28 +37,33 @@ export const useTimerStore = create<TimerState>()(
         }
         set(state => ({ tasks: [newTask, ...state.tasks] }))
       },
-
+      
       startTimer: (taskId: number) => {
         set(state => ({
           tasks: state.tasks.map(task => 
-            task.id === taskId 
+            task.id === taskId
               ? { ...task, isRunning: true }
               : task
           )
         }))
       },
-
+      
       stopTimer: (taskId: number) => {
         set(state => {
           const updatedTasks = state.tasks.map(task => {
             if (task.id === taskId && task.isRunning) {
-              const sessionDuration = Math.round((Date.now() - (task.sessions[task.sessions.length - 1]?.start?.getTime() || Date.now())) / 1000)
+              const lastSession = task.sessions[task.sessions.length - 1]
+              const sessionDuration = Math.round(
+                (Date.now() - (lastSession?.start instanceof Date 
+                  ? lastSession.start.getTime() 
+                  : Date.now())) / 1000
+              )
               
               return {
                 ...task,
                 totalTime: task.totalTime + sessionDuration,
                 sessions: [
-                  ...task.sessions, 
+                  ...task.sessions,
                   { start: new Date(), duration: sessionDuration }
                 ],
                 isRunning: false
@@ -66,11 +71,11 @@ export const useTimerStore = create<TimerState>()(
             }
             return task
           })
-
+          
           return { tasks: updatedTasks }
         })
       },
-
+      
       deleteTask: (taskId: number) => {
         set(state => ({
           tasks: state.tasks.filter(task => task.id !== taskId)
@@ -79,7 +84,7 @@ export const useTimerStore = create<TimerState>()(
     }),
     {
       name: 'timer-storage',
-      getStorage: () => localStorage
+      storage: localStorage // Zmieniono z getStorage na storage
     }
   )
 )

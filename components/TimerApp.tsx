@@ -35,8 +35,11 @@ export function TimerApp() {
 
       <div className="space-y-4">
         {tasks.map((task) => {
+          const lastSession = task.sessions[task.sessions.length - 1]
           const currentTime = task.totalTime + (task.isRunning 
-            ? Math.round((Date.now() - (task.sessions[task.sessions.length - 1]?.start?.getTime() || Date.now())) / 1000)
+            ? Math.round((Date.now() - (lastSession?.start instanceof Date 
+              ? lastSession.start.getTime() 
+              : Date.now())) / 1000)
             : 0)
 
           return (
