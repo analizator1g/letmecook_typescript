@@ -32,7 +32,7 @@ export const formatTime = (seconds: number): string => {
 
 export const useTimerStore = create<TimerState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       tasks: [],
       
       addTask: (name) => set((state) => ({
