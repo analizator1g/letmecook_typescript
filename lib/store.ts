@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware'
 
 interface Session {
   start: Date
@@ -92,32 +92,35 @@ export const useTimerStore = create<TimerState>()(
     {
       name: 'timer-storage',
       storage: createJSONStorage(() => localStorage),
-      // Optional: serialize/deserialize dates
-      serialize: (state) => JSON.stringify({
-        ...state,
-        tasks: state.tasks.map(task => ({
-          ...task,
-          sessions: task.sessions.map(session => ({
-            ...session,
-            start: session.start ? session.start.toISOString() : undefined,
-            end: session.end ? session.end.toISOString() : undefined
-          }))
-        }))
-      }),
-      deserialize: (str) => {
-        const parsed = JSON.parse(str)
-        return {
-          ...parsed,
-          tasks: parsed.tasks.map((task: Task) => ({
+      // Dodaj middleware do transformacji
+      middleware: (config) => ({
+        ...config,
+        serialize: (state) => JSON.stringify({
+          ...state,
+          tasks: state.tasks.map(task => ({
             ...task,
             sessions: task.sessions.map(session => ({
               ...session,
-              start: session.start ? new Date(session.start) : undefined,
-              end: session.end ? new Date(session.end) : undefined
+              start: session.start ? session.start.toISOString() : undefined,
+              end: session.end ? session.end.toISOString() : undefined
             }))
           }))
+        }),
+        deserialize: (str) => {
+          const parsed = JSON.parse(str)
+          return {
+            ...parsed,
+            tasks: parsed.tasks.map((task: Task) => ({
+              ...task,
+              sessions: task.sessions.map(session => ({
+                ...session,
+                start: session.start ? new Date(session.start) : undefined,
+                end: session.end ? new Date(session.end) : undefined
+              }))
+            }))
+          }
         }
-      }
+      })
     }
   )
 )
