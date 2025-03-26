@@ -92,10 +92,10 @@ export const useTimerStore = create<TimerState>()(
     {
       name: 'timer-storage',
       storage: createJSONStorage(() => localStorage),
-      // Dodaj middleware do transformacji
-      middleware: (config) => ({
-        ...config,
-        serialize: (state) => JSON.stringify({
+      
+      // Dodaj niestandardowe metody serializacji
+      transform: {
+        serialize: (state) => ({
           ...state,
           tasks: state.tasks.map(task => ({
             ...task,
@@ -106,21 +106,18 @@ export const useTimerStore = create<TimerState>()(
             }))
           }))
         }),
-        deserialize: (str) => {
-          const parsed = JSON.parse(str)
-          return {
-            ...parsed,
-            tasks: parsed.tasks.map((task: Task) => ({
-              ...task,
-              sessions: task.sessions.map(session => ({
-                ...session,
-                start: session.start ? new Date(session.start) : undefined,
-                end: session.end ? new Date(session.end) : undefined
-              }))
+        deserialize: (state) => ({
+          ...state,
+          tasks: state.tasks.map((task: Task) => ({
+            ...task,
+            sessions: task.sessions.map(session => ({
+              ...session,
+              start: session.start ? new Date(session.start) : undefined,
+              end: session.end ? new Date(session.end) : undefined
             }))
-          }
-        }
-      })
+          }))
+        })
+      }
     }
   )
 )
