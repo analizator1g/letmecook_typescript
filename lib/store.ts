@@ -30,6 +30,34 @@ export const formatTime = (seconds: number): string => {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
+// Funkcje do serializacji i deserializacji
+const serializeState = (state: TimerState) => {
+  return JSON.stringify({
+    tasks: state.tasks.map(task => ({
+      ...task,
+      sessions: task.sessions.map(session => ({
+        ...session,
+        start: session.start ? session.start.toISOString() : undefined,
+        end: session.end ? session.end.toISOString() : undefined
+      }))
+    }))
+  })
+}
+
+const deserializeState = (str: string): Partial<TimerState> => {
+  const parsed = JSON.parse(str)
+  return {
+    tasks: parsed.tasks.map((task: Task) => ({
+      ...task,
+      sessions: task.sessions.map(session => ({
+        ...session,
+        start: session.start ? new Date(session.start) : undefined,
+        end: session.end ? new Date(session.end) : undefined
+      }))
+    }))
+  }
+}
+
 export const useTimerStore = create<TimerState>()(
   persist(
     (set) => ({
@@ -93,30 +121,18 @@ export const useTimerStore = create<TimerState>()(
       name: 'timer-storage',
       storage: createJSONStorage(() => localStorage),
       
-      // Dodaj niestandardowe metody serializacji
-      transform: {
-        serialize: (state) => ({
-          ...state,
-          tasks: state.tasks.map(task => ({
-            ...task,
-            sessions: task.sessions.map(session => ({
-              ...session,
-              start: session.start ? session.start.toISOString() : undefined,
-              end: session.end ? session.end.toISOString() : undefined
-            }))
-          }))
-        }),
-        deserialize: (state) => ({
-          ...state,
-          tasks: state.tasks.map((task: Task) => ({
-            ...task,
-            sessions: task.sessions.map(session => ({
-              ...session,
-              start: session.start ? new Date(session.start) : undefined,
-              end: session.end ? new Date(session.end) : undefined
-            }))
-          }))
-        })
+      // Własna implementacja serializacji
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name)
+          return str ? deserializeState(str) : null
+        },
+        setItem: (name, value) => {
+          localStorage.setItem(name, serializeState(value as TimerState))
+        },
+        removeItem: (name) => {
+          localStorage.removeItem(name)
+        }
       }
     }
   )
