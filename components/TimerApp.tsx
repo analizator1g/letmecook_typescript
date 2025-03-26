@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTimerStore, formatTime } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,14 +9,23 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Play, Pause, Trash2 } from 'lucide-react'
 
 export function TimerApp() {
+  const [isClient, setIsClient] = useState(false)
   const { tasks, addTask, startTimer, stopTimer, deleteTask } = useTimerStore()
   const [newTaskName, setNewTaskName] = useState('')
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleAddTask = () => {
     if (newTaskName.trim()) {
       addTask(newTaskName)
       setNewTaskName('')
     }
+  }
+
+  if (!isClient) {
+    return null // Renders nothing on the server
   }
 
   return (
